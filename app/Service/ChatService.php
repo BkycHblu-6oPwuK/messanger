@@ -67,7 +67,6 @@ class ChatService
         $messages = MessageResource::collection($messages)->resolve();
         asort($messages);
         $messages = array_values($messages);
-
         return compact('messages', 'pagination');
     }
 

@@ -62,15 +62,14 @@ class ChatsController extends BaseChatController
     {
         $data = $request->validated();
         unset($data['files']);
-        $message->update($data);
-        return redirect()->route('chats.show', $message->chat_group_id);
+        $result = $message->update($data);
+        return response($result);
     }
 
     public function delete(Message $message)
     {
-        $id = $message->chat_group_id;
-        $message->delete();
-        return redirect()->route('chats.show', $id);
+        $result = $message->delete();
+        return response($result);
     }
 
     public function getMessages(ChatGroups $chat,$page)

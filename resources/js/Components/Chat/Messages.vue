@@ -1,40 +1,20 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3';
 import { nextTick, onUnmounted, reactive } from 'vue';
 import { onMounted, computed, ref } from 'vue';
-import FileUploadComponent from './FileUploadComponent.vue'
 import MessagesHeader from './MessagesHeader.vue'
 import MessageBlock from './MessageBlock.vue'
-import Input from './Input.vue'
-import Button from './Button.vue'
 import axios from 'axios';
 import { watch } from 'vue';
 import { useStore } from 'vuex';
 import { defineAsyncComponent } from 'vue';
-import { proxyRefs } from 'vue';
+import FormMessage from './FormMessage.vue';
+import {findIndexById} from '@/Functions/helpers';
 
 const store = useStore()
 const props = defineProps({
     data: Object,
 })
-const form = useForm({
-    body: '',
-    chat_group_id: props.data.chat?.id,
-    files: [],
-})
-const formOptions = reactive({
-    isUpdate: false,
-    isDelete: false,
-    messageId: null,
-    reset: () => {
-        formOptions.isUpdate = false
-        formOptions.isDelete = false
-        formOptions.messageId = null
-    }
-})
 const Gallary = defineAsyncComponent(() => import('./Gallary.vue'));
-const hasFales = ref(false)
-const disabledForm = computed(() => (form.body !== '' || hasFales.value))
 const messageBlock = ref()
 const hasLoadMessage = ref(false)
 const topMessageId = ref()
@@ -44,12 +24,22 @@ const images = ref([])
 const activeIndex = ref(0)
 const activeMessageId = ref(null);
 const menuPosition = ref({ x: 0, y: 0 });
+const formOptions = reactive({
+    isUpdate: false,
+    messageId: null,
+    index: null,
+    reset: () => {
+        formOptions.isUpdate = false
+        formOptions.isDelete = false
+        formOptions.messageId = null
+        formOptions.index = null
+    }
+})
 
 onMounted(() => {
     scrollToBottom()
     window.addEventListener('click', closeMenu);
 })
-
 
 onUnmounted(() => {
     window.removeEventListener('click', closeMenu);
@@ -85,8 +75,8 @@ const loadMoreMessages = async () => {
         topMessageId.value = getTopVisibleMessageId(messageBlock.value);
         props.data.pagination.currentPage += 1;
         try {
-            const res = await axios.get(`/api/getMessage/${props.data.chat.id}/${props.data.pagination.currentPage}`)
-            res.data.reverse().forEach((item) => {
+            const res = await axios.get(route('message.get',{chat:props.data.chat.id,page:props.data.pagination.currentPage}))
+            await res.data.forEach((item) => {
                 props.data.messages.unshift(item)
             });
             let topMessageElement = document.getElementById(topMessageId.value);
@@ -113,48 +103,6 @@ const getTopVisibleMessageId = (container) => {
     }
     return null;
 }
-
-const methods = {
-    post: (url, options) => form.post(url, options),
-    patch: (url, options) => form.patch(url, options),
-    delete: (url, options) => form.delete(url, options),
-}
-
-const requestMessage = (url, method, files, closeModal) => {
-    if (files) {
-        Object.values(files).forEach(file => {
-            if (file.accepted) {
-                form.files.push(file.file)
-            }
-        });
-    }
-    methods[method](url, {
-        onSuccess: (res) => {
-            if (closeModal) {
-                closeModal()
-            }
-            form.reset('body', 'files', 'isUpdate', 'isDelete', 'messageId')
-            formOptions.reset()
-            hasFales.value = false
-            scrollToBottom();
-        },
-        onError: (res) => {
-            console.log(res)
-        }
-    })
-}
-
-const sendRequestMessage = (files, closeModal) => {
-    if (formOptions.isUpdate) {
-        return requestMessage(route('chats.update', formOptions.messageId), 'patch', files, closeModal)
-    }
-    if (formOptions.isDelete) {
-        return requestMessage(route('chats.delete', formOptions.messageId), 'delete', files, closeModal)
-    }
-    requestMessage(route('chats.store'), 'post', files, closeModal)
-}
-
-const hasFalesUpdating = () => hasFales.value = true;
 
 const getGallary = () => {
     images.value = store.getters.getGallary;
@@ -192,18 +140,15 @@ const closeMenu = () => {
     }
 };
 const isUpdateMessage = (messageId) => {
-    let index = props.data.messages.findIndex(message => message.id === messageId)
-    if (index) {
-        form.body = props.data.messages[index].body
-        formOptions.isUpdate = true
-        formOptions.messageId = messageId
-    }
-}
-
-const isDeleteMessage = (messageId) => {
     formOptions.messageId = messageId
-    formOptions.isDelete = true
-    sendRequestMessage()
+}
+const deleteMessage = (messageId) => {
+    let index = findIndexById(props.data.messages,messageId)
+    axios.delete(route('chats.delete',messageId)).then((res) => {
+        if(res.data === 1){
+            props.data.messages.splice(index,1)
+        }
+    })
 }
 </script>
 
@@ -236,7 +181,7 @@ const isDeleteMessage = (messageId) => {
                             <a @click.prevent="isUpdateMessage(message.id)" href="#"
                                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                                 role="menuitem">Изменить</a>
-                            <a @click.prevent="isDeleteMessage(message.id)" href="#"
+                            <a @click.prevent="deleteMessage(message.id)" href="#"
                                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                                 role="menuitem">Удалить</a>
                         </div>
@@ -247,16 +192,7 @@ const isDeleteMessage = (messageId) => {
 
         </div>
 
-        <div @keyup.enter="sendRequestMessage" class="sticky bottom-0 bg-white border-gray-200 mt-1 :mt-4">
-            <div class="p-fileupload-content"></div>
-            <div class="flex p-1 lg:p-6">
-                <FileUploadComponent @storeMessage="sendRequestMessage" :isUpdate="formOptions.isUpdate" :form="form"
-                    :disabledForm="disabledForm" :hasFalesUpdating="hasFalesUpdating"></FileUploadComponent>
-                <Input :form="form"></Input>
-                <Button @click="sendRequestMessage" :disabled="!disabledForm" :isUpdate="formOptions.isUpdate"
-                    :class="!disabledForm ? 'pointer-events-none opacity-70' : ''"></Button>
-            </div>
-        </div>
+        <FormMessage @scrollToBottom="scrollToBottom" :data="props.data" :formOptions="formOptions"></FormMessage>
 
     </div>
     <div v-else-if="!props.data.chat && props.data.isLargeScreen"

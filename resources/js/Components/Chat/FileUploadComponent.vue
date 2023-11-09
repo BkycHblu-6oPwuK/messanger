@@ -17,7 +17,7 @@
                     :maxFileSize="600000000" :uploadOnDrop="false" :multipleUpload="true" :parallelUpload="3" />
             </div>
             <div class="flex mt-6 flex-shrink-0">
-                <Input :form="props.form"></Input>
+                <Input v-model="body"></Input>
                 <Button @click="emits('storeMessage',dropzone.all, close)" :isUpdate="props.isUpdate" :disabled="!props.disabledForm"
                     :class="!props.disabledForm ? 'pointer-events-none opacity-70' : ''"></Button>
             </div>
@@ -37,17 +37,18 @@ import Button from './Button.vue'
 const dropzone = ref()
 const modalShow = ref(false);
 const props = defineProps({
-    form: Object,
     disabledForm: Boolean,
     isUpdate: Boolean,
     hasFalesUpdating: Function,
 })
+const body = defineModel('body')
+const files = defineModel('files')
 const emits = defineEmits(['storeMessage'])
 function show() {
     modalShow.value = true
 }
 function close() {
-    props.form.files = []
+    files.value = []
     modalShow.value = false
 }
 </script>
