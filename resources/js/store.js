@@ -1,5 +1,5 @@
 import { createStore } from 'vuex';
-
+import { findIndexById } from './Functions/helpers';
 export default createStore({
     state: {
         shouldScroll: false,
@@ -24,7 +24,7 @@ export default createStore({
         },
         setCurrentIndex(state,value){
             if(value !== null){
-                let index = state.gallary.findIndex(image => image.id === value);
+                let index = findIndexById(state.gallary,value);
                 index = index === -1 ? value : index
                 state.currentIndex = index;
             } else {

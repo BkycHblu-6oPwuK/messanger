@@ -22,9 +22,15 @@ class UpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'body' => 'required_without:files|nullable|string',
-            'files' => 'required_without:body|array',
+            'body' => 'nullable|string',
+            'deletesFiles' => 'nullable|array',
+            'files' => 'nullable|array',
             'files.*' => 'file',
         ];
     }
 }
+/*
+'body' => 'required_without_all:files,deletesFiles|nullable|string',
+'deletesFiles' => 'required_without_all:files,body|array',
+'files' => 'required_without_all:body,deletesFiles|array',
+*/

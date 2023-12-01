@@ -8,8 +8,7 @@ import { watch } from 'vue';
 import { useStore } from 'vuex';
 import { defineAsyncComponent } from 'vue';
 import FormMessage from './FormMessage.vue';
-import {findIndexById} from '@/Functions/helpers';
-
+import { findIndexById } from '@/Functions/helpers';
 const store = useStore()
 const props = defineProps({
     data: Object,
@@ -24,6 +23,9 @@ const images = ref([])
 const activeIndex = ref(0)
 const activeMessageId = ref(null);
 const menuPosition = ref({ x: 0, y: 0 });
+const isHighlight = ref(false);
+const idsMessages = ref([]);
+const countIdsMessages = computed(() => idsMessages.value.length);
 const formOptions = reactive({
     isUpdate: false,
     messageId: null,
@@ -72,17 +74,19 @@ const handleScroll = async () => {
 
 const loadMoreMessages = async () => {
     if (props.data.pagination.currentPage < props.data.pagination.lastPage) {
-        topMessageId.value = getTopVisibleMessageId(messageBlock.value);
+        //let lastmessageId = await new Promise((resolve, reject) => resolve(props.data.messages[props.data.messages.length - 1].id));
+        let lastmessageId = props.data.messages[props.data.messages.length - 1].id;
         props.data.pagination.currentPage += 1;
         try {
-            const res = await axios.get(route('message.get',{chat:props.data.chat.id,page:props.data.pagination.currentPage}))
+            let topMessageElement = document.getElementById(`message-${lastmessageId}`);
+            const res = await axios.get(route('message.get', { chat: props.data.chat.id, page: props.data.pagination.currentPage }))
             await res.data.forEach((item) => {
-                props.data.messages.unshift(item)
+                props.data.messages.push(item)
             });
-            let topMessageElement = document.getElementById(topMessageId.value);
-            if (topMessageElement) {
+            if(topMessageElement){
                 topMessageElement.scrollIntoView();
             }
+
         } catch (error) {
             console.error(error)
             throw error
@@ -90,19 +94,20 @@ const loadMoreMessages = async () => {
     }
 }
 
-const getTopVisibleMessageId = (container) => {
-    const boundsTop = container.getBoundingClientRect().top;
-    for (const message of props.data.messages) {
-        const messageEl = document.getElementById(`message-${message.id}`);
-        if (messageEl) {
-            const bounds = messageEl.getBoundingClientRect();
-            if (bounds.top >= boundsTop) {
-                return `message-${message.id}`;
-            }
-        }
-    }
-    return null;
-}
+//const getTopVisibleMessageId = () => {
+    // const boundsTop = container.getBoundingClientRect().top;
+    // console.log(container.getBoundingClientRect())
+    // for (const message of props.data.messages) {
+    //     const messageEl = document.getElementById(`message-${message.id}`);
+    //     if (messageEl) {
+    //         const bounds = messageEl.getBoundingClientRect();
+    //         if (bounds.top >= boundsTop) {
+    //             return `message-${message.id}`;
+    //         }
+    //     }
+    // }
+    // return null;
+//}
 
 const getGallary = () => {
     images.value = store.getters.getGallary;
@@ -143,25 +148,38 @@ const isUpdateMessage = (messageId) => {
     formOptions.messageId = messageId
 }
 const deleteMessage = (messageId) => {
-    let index = findIndexById(props.data.messages,messageId)
-    axios.delete(route('chats.delete',messageId)).then((res) => {
-        if(res.data === 1){
-            props.data.messages.splice(index,1)
+    let index = findIndexById(props.data.messages, messageId)
+    axios.delete(route('chats.delete', messageId)).then((res) => {
+        if (res.data == true) {
+            props.data.messages.splice(index, 1)
         }
     })
+}
+const destroyMessages = () => {
+    if (idsMessages.value.length > 0) {
+        axios.post(route('chats.destroy'), { ids: idsMessages.value }).then((res) => {
+            if (res.data > 0) {
+                idsMessages.value.forEach(item => {
+                    let index = findIndexById(props.data.messages, item)
+                    props.data.messages.splice(index, 1)
+                })
+            }
+        })
+    }
 }
 </script>
 
 <template>
     <div v-if="props.data.chat" ref="messageBlock" @scroll="handleScroll"
         class="flex-1 bg-white shadow-md flex overflow-y-auto flex-col h-full">
-        <MessagesHeader :chat="props.data.chat" :isLargeScreen="props.data.isLargeScreen"></MessagesHeader>
+        <MessagesHeader @destroyMessages="destroyMessages" :countIdsMessages="countIdsMessages" :isHighlight="isHighlight"
+            :chat="props.data.chat" :isLargeScreen="props.data.isLargeScreen"></MessagesHeader>
 
         <div v-if="props.data.messages.length == 0" class="flex items-center justify-center w-full">Здесь пока ничего нет
         </div>
         <div class="flex-1 flex flex-col justify-end p-1 lg:p-6">
 
-            <div class="flex-1 flex flex-col justify-end p-1 lg:p-3">
+            <div class="flex-1 flex flex-col-reverse justify-end p-1 lg:p-3">
                 <div v-if="props.data.messages.length > 0" v-for="message in props.data.messages" :key="message.id"
                     class="flex items-start mb-2 lg:mb-4"
                     :class="props.data.auth.user.id == message.sender_id ? 'flex-row-reverse lg:flex-row' : ''"
@@ -172,12 +190,16 @@ const deleteMessage = (messageId) => {
                         :class="!props.data.isLargeScreen ? 'ml-3' : ''">
                     <MessageBlock @scrollToBottom="scrollToBottom"
                         @mouseup.right="showMenuMessage($event, message.sender_id, message.id)" @contextmenu.prevent
-                        :message="message" :isLargeScreen="props.data.isLargeScreen" :user="props.data.auth.user">
+                        :message="message" :idsMessages="idsMessages" :isHighlight="isHighlight"
+                        :isLargeScreen="props.data.isLargeScreen" :user="props.data.auth.user">
                     </MessageBlock>
                     <div v-if="activeMessageId == message.id" :style="{ top: menuPosition.y, left: menuPosition.x }"
                         class="absolute z-10 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
                         @click="menuVisible = false">
                         <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                            <a @click.prevent="isHighlight = !isHighlight" href="#"
+                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                                role="menuitem">Выделить</a>
                             <a @click.prevent="isUpdateMessage(message.id)" href="#"
                                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                                 role="menuitem">Изменить</a>

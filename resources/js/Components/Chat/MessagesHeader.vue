@@ -1,6 +1,7 @@
 <script setup>
 import { Link } from '@inertiajs/vue3';
 import axios from 'axios';
+import Button from 'primevue/button';
 import { defineAsyncComponent } from 'vue';
 import { computed } from 'vue';
 import { ref } from 'vue';
@@ -11,15 +12,17 @@ const store = useStore();
 const props = defineProps({
     isLargeScreen: Boolean,
     chat: Object,
+    isHighlight: Boolean,
+    countIdsMessages: Number,
 })
-
+const emits = defineEmits(['destroyMessages'])
 const settingsMenuOpen = ref(false)
-function toggleSettingsMenu(event) {
+const toggleSettingsMenu = (event) => {
     if (!event.target.closest('.settings-dropdown')) {
         settingsMenuOpen.value = !settingsMenuOpen.value;
     }
 }
-function closeMenu(event) {
+const closeMenu = (event) => {
     if (!event.target.closest('.settings-dropdown')) {
         settingsMenuOpen.value = false;
     }
@@ -43,32 +46,37 @@ const getDetails = () => {
 }
 
 const showDetails = () => {
-    store.commit('setShowDetails',true)
+    store.commit('setShowDetails', true)
 }
 
 </script>
 
 <template>
     <div class="bg-white flex items-center justify-between py-1 border-b border-gray-200 sticky top-0 z-10">
-        <Link v-if="!props.isLargeScreen" :href="route('chats.index')" class="px-3 rounded-lg transition">
-        ←
-        </Link>
-
-        <Link v-if="!isLargeScreen" :href="route('chats.details', props.chat.id)" class="flex items-center space-x-3">
-        <img src="https://s.ekabu.ru/localStorage/post/e3/df/40/66/e3df4066.jpg" alt="User Avatar"
-            class="w-10 h-10 rounded-full border-2 border-blue-500 object-cover">
-        <span class="text-xl font-medium text-gray-800">{{ props.chat.name }}</span>
-        </Link>
-
-        <div v-if="isLargeScreen" @click="showDetails" class="flex items-center space-x-3">
+        <div v-if="!props.isHighlight">
+            <Link v-if="!props.isLargeScreen" :href="route('chats.index')" class="px-3 rounded-lg transition">
+            ←
+            </Link>
+            <Link v-if="!isLargeScreen" :href="route('chats.details', props.chat.id)" class="flex items-center space-x-3">
             <img src="https://s.ekabu.ru/localStorage/post/e3/df/40/66/e3df4066.jpg" alt="User Avatar"
                 class="w-10 h-10 rounded-full border-2 border-blue-500 object-cover">
             <span class="text-xl font-medium text-gray-800">{{ props.chat.name }}</span>
+            </Link>
+            <div v-if="isLargeScreen" @click="showDetails" class="flex items-center space-x-3">
+                <img src="https://s.ekabu.ru/localStorage/post/e3/df/40/66/e3df4066.jpg" alt="User Avatar"
+                    class="w-10 h-10 rounded-full border-2 border-blue-500 object-cover">
+                <span class="text-xl font-medium text-gray-800">{{ props.chat.name }}</span>
+            </div>
+            <button v-if="!props.isLargeScreen" @click.stop="toggleSettingsMenu" class="px-3 rounded-lg transition">
+                ⋮
+            </button>
         </div>
-
-        <button v-if="!props.isLargeScreen" @click.stop="toggleSettingsMenu" class="px-3 rounded-lg transition">
-            ⋮
-        </button>
+        <div v-else>
+            <button @click="emits('destroyMessages')" type="submit"
+                class="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:border-blue-800 focus:ring focus:ring-blue-200">
+                Delete ({{ props.countIdsMessages }})
+            </button>
+        </div>
     </div>
     <div v-if="settingsMenuOpen"
         class="settings-dropdown absolute right-5 top-16 bg-white shadow-lg rounded-md w-64 border border-gray-200 z-20">

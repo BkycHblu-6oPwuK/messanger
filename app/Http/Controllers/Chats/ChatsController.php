@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Chats;
 
 use App\Events\StoreMessageEvent;
 use App\Http\Requests\Api\GetUsersRequest;
+use App\Http\Requests\Messages\DestroyRequest;
 use App\Http\Requests\Messages\StoreRequest;
 use App\Http\Requests\Messages\UpdateRequest;
 use App\Http\Resources\Group\GroupResource;
@@ -61,16 +62,23 @@ class ChatsController extends BaseChatController
     public function update(Message $message, UpdateRequest $request)
     {
         $data = $request->validated();
-        unset($data['files']);
-        $result = $message->update($data);
-        return response($result);
+        $result = $this->service->update($message, $data);
+        return response()->json($result);
     }
 
     public function delete(Message $message)
     {
-        $result = $message->delete();
+        $result = $this->service->delete($message);
         return response($result);
     }
+
+    public function destroy(DestroyRequest $request)
+    {
+        $ids = $request->validated();
+        $result = $this->service->destroy($ids);
+        return response($result);
+    }
+
 
     public function getMessages(ChatGroups $chat,$page)
     {

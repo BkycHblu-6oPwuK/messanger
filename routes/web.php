@@ -45,7 +45,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/chat/{chat}',[ChatsController::class, 'show'])->name('chats.show');
     Route::get('/chat/{chat}/details',[ChatsController::class, 'details'])->name('chats.details');
     Route::post('/chat',[ChatsController::class, 'store'])->name('chats.store');
-    Route::patch('/chat/{message}',[ChatsController::class, 'update'])->name('chats.update');
+    Route::post('/chat/{message}',[ChatsController::class, 'update'])->name('chats.update');
     Route::delete('/chat/{message}',[ChatsController::class, 'delete'])->name('chats.delete');
     Route::post('/group',[GroupController::class, 'store'])->name('group.store');
 

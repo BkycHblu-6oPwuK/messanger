@@ -3,7 +3,7 @@
         📎
     </button>
     <Modal :show="modalShow" @close="close">
-        <div @keyup.enter="emits('storeMessage',dropzone.all, close)">
+        <div @keyup.enter="emits('storeMessage', dropzone.all, close)">
             <div class="mb-2 flex justify-end align-top">
                 <button @click="close"
                     class="bg-transparent hover:bg-gray-200 text-gray-500 font-semibold py-2 px-2 rounded-lg">
@@ -18,8 +18,10 @@
             </div>
             <div class="flex mt-6 flex-shrink-0">
                 <Input v-model="body"></Input>
-                <Button @click="emits('storeMessage',dropzone.all, close)" :isUpdate="props.isUpdate" :disabled="!props.disabledForm"
+                <Button v-if="!props.isUpdate" @click="emits('storeMessage', dropzone.all, close)" :isUpdate="props.isUpdate"
+                    :disabled="!props.disabledForm"
                     :class="!props.disabledForm ? 'pointer-events-none opacity-70' : ''"></Button>
+                <Button v-if="props.isUpdate" @click="emits('updateMessage', dropzone.all, close)" :isUpdate="props.isUpdate"></Button>
             </div>
         </div>
     </Modal>
@@ -43,7 +45,7 @@ const props = defineProps({
 })
 const body = defineModel('body')
 const files = defineModel('files')
-const emits = defineEmits(['storeMessage'])
+const emits = defineEmits(['storeMessage','updateMessage'])
 function show() {
     modalShow.value = true
 }

@@ -9,6 +9,8 @@ import DropZone from 'dropzone-vue';
 import store from './store';
 import Vue3TouchEvents from "vue3-touch-events";
 import PrimeVue from 'primevue/config';
+import VuePlyr from 'vue-plyr'
+import 'vue-plyr/dist/vue-plyr.css'
 
 import 'primeicons/primeicons.css';
 
@@ -32,6 +34,7 @@ const app = createInertiaApp({
             .use(DropZone)
             .use(store)
             .use(PrimeVue)
+            .use(VuePlyr)
             .use(Vue3TouchEvents)
             .mount(el);
     },

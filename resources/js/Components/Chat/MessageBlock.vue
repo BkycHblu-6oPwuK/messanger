@@ -1,19 +1,36 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import 'video.js/dist/video-js.css';
 import Video from './Video.vue'
 import { useStore } from 'vuex';
 import { onMounted } from 'vue';
+import { findIndexById } from '@/Functions/helpers';
 
 const store = useStore();
 const props = defineProps({
     message: Object,
     user: Object,
     isLargeScreen: Boolean,
+    isHighlight: Boolean,
+    idsMessages: Array,
 })
 const emits = defineEmits(['scrollToBottom'])
 const countColumn = ref(2)
 const countColSpan = ref(1)
+const highlighted = ref(false)
+
+watch(() => props.isHighlight, (newValue) => {
+    highlighted.value = false
+})
+
+watch(() => highlighted.value, (newValue) => {
+    if(newValue){
+        props.idsMessages.push(props.message.id)
+    } else {
+        let index = findIndexById(props.idsMessages,props.message.id)
+        props.idsMessages.splice(index,1)
+    }
+})
 
 const updateGridValues = (length, type) => {
     if (type && type.startsWith('video/')) {
@@ -48,24 +65,26 @@ const updateGridValues = (length, type) => {
         countColSpan.value = 1
     }
 }
-const setImageToStoreGallary = (image,key) => {
+const setImageToStoreGallary = (image, key) => {
     let data = {}
     data = {
         'id': key,
         'itemImageSrc': image,
         'thumbnailImageSrc': image,
-        'alt':"Description for Image 1"
+        'alt': "Description for Image 1"
     }
-    store.commit('setGallary',data)
+    store.commit('setGallary', data)
 }
-const setCurrentIndexToStore = (key) => store.commit('setCurrentIndex',key)
-
-
-
+const setCurrentIndexToStore = (key) => store.commit('setCurrentIndex', key)
+const highlight = () => {
+    if(props.isHighlight && props.message.sender_id == props.user.id)[
+        highlighted.value = !highlighted.value
+    ]
+}
 </script>
 
 <template>
-    <div class="bg-gray-100 rounded-lg max-w-[80%] lg:max-w-screen-md">
+    <div @click="highlight" class="bg-gray-100 rounded-lg max-w-[80%] lg:max-w-screen-md" :class="highlighted ? 'opacity-75' : ''">
         <!-- :class="props.message.gallary && props.message.gallary.length > 1 ? 'flex flex-col p-3' : ''" -->
         <div v-if="props.message.gallary && props.message.gallary.length"
             :class="`grid grid-cols-${countColumn - 1 == 0 ? 1 : countColumn} gap-2 lg:grid-cols-${countColumn} lg:gap-3`">
@@ -74,16 +93,24 @@ const setCurrentIndexToStore = (key) => store.commit('setCurrentIndex',key)
                 :class="`col-span-${countColSpan}`">
 
                 <div v-if="gallary?.type?.startsWith('image/')" class="relative max-h-156 h-full bg-gray-200">
-                    <img @load="setImageToStoreGallary(gallary.media_path,gallary.id),emits('scrollToBottom')" @click="setCurrentIndexToStore(gallary.id)" :src="gallary.media_path" alt="Gallery Image"
+                    <img @load="setImageToStoreGallary(gallary.media_path, gallary.id), emits('scrollToBottom')"
+                        @click="props.isHighlight ? null : setCurrentIndexToStore(gallary.id)" :src="gallary.media_path" alt="Gallery Image"
                         class="w-full h-full object-cover rounded-md shadow-md cursor-pointer">
                 </div>
 
-                <Video v-else-if="gallary?.type?.startsWith('video/')" :gallary="gallary"
-                    class="relative w-full h-auto"></Video>
+                <Video v-else-if="gallary?.type?.startsWith('video/')" :gallary="gallary"></Video>
+
+                <div v-else-if="gallary?.type?.startsWith('audio/')">
+                    <vue-plyr>
+                        <audio controls crossorigin playsinline>
+                            <source :src="gallary.media_path" :type="gallary.type" />
+                        </audio>
+                    </vue-plyr>
+                </div>
 
                 <div v-else class="relative max-h-16 h-full p-3">
-                    <a :href="gallary.media_path" target="_blank"
-                        class="flex items-center no-underline text-blue-500 hover:text-blue-700 h-full justify-center gap-2 items-center">
+                    <a :href="gallary.media_path" target="_blank" download
+                        class="flex items-center no-underline text-blue-500 hover:text-blue-700 h-full justify-center gap-2">
                         <span>📄</span>
                         <span class="line-clamp-2">{{ gallary.original_name }}</span>
                     </a>
@@ -106,3 +133,10 @@ const setCurrentIndexToStore = (key) => store.commit('setCurrentIndex',key)
 
     </div>
 </template>
+
+<style>
+/* .gallary-video{
+    height: 400px;
+    width: 600px;
+} */
+</style>

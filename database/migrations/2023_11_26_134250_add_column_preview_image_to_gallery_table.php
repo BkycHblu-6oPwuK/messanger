@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('chat_groups', function (Blueprint $table) {
-            $table->string('avatar')->nullable()->after('name');
+        Schema::table('gallery', function (Blueprint $table) {
+            $table->string('preview_path')->nullable()->after('media_path');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('chat_groups', function (Blueprint $table) {
-            $table->dropColumn('avatar');
+        Schema::table('gallery', function (Blueprint $table) {
+            $table->dropColumn('preview_path');
         });
     }
 };
