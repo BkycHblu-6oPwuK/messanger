@@ -24,6 +24,7 @@ class DestroyRequest extends FormRequest
         return [
             'ids' => 'required|array',
             'ids.*' => 'integer',
+            'chat_id' => 'integer'
         ];
     }
 }

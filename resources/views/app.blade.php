@@ -13,7 +13,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.5.1/chart.min.js"></script>
         <!-- Scripts -->
         @routes
-        @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
+        @vite(['resources/js/app.js']) <? // , "resources/js/Pages/{$page['component']}.vue" ?>
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

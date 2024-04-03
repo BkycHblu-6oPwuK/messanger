@@ -61,7 +61,7 @@ function store() {
                 <div class="mb-4">
                     <label for="members" class="block text-sm font-medium mb-2 text-gray-600">Select Members:</label>
                     <MultiSelect unstyled :pt="MyDesignMultiselect.multiselect" v-model="form.members"
-                        :options="props.friends" optionLabel="name" placeholder="Select Countries" display="chip"
+                        :options="props.friends" optionLabel="name" placeholder="Select friends" display="chip"
                         class="w-full md:w-20rem" aria-describedby="text-error">
 
                         <!-- <template #option="slotProps">

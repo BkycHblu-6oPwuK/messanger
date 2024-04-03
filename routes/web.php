@@ -6,6 +6,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Users\UsersController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 
 /*
@@ -18,7 +19,7 @@ use Inertia\Inertia;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
+// URL::forceScheme('https');
 
 
 Route::get('/dashboard', function () {
@@ -46,7 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/chat/{chat}/details',[ChatsController::class, 'details'])->name('chats.details');
     Route::post('/chat',[ChatsController::class, 'store'])->name('chats.store');
     Route::post('/chat/{message}',[ChatsController::class, 'update'])->name('chats.update');
-    Route::delete('/chat/{message}',[ChatsController::class, 'delete'])->name('chats.delete');
+    Route::delete('/chat/{message}/{method}',[ChatsController::class, 'delete'])->name('chats.delete');
     Route::post('/group',[GroupController::class, 'store'])->name('group.store');
 
     Route::get('/profile',[UsersController::class, 'index'])->name('users.index');

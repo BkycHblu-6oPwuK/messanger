@@ -10,12 +10,12 @@ use App\Models\Friend;
 use App\Models\Gallery;
 use App\Models\Message;
 use FFMpeg\FFProbe;
-use Illuminate\Pagination\Paginator as PaginationPaginator;
+use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Request;
 use Pawlox\VideoThumbnail\Facade\VideoThumbnail;
 
 class ChatService
@@ -78,7 +78,7 @@ class ChatService
             $videoPath,
             Storage::disk('public')->path($dir),
             $thumbName,
-            rand(0,$duration),
+            rand(0, $duration),
             1920,
             1080
         );
@@ -123,35 +123,52 @@ class ChatService
         return $result;
     }
 
-    public function delete($message)
+    public function delete($message, $method = 'real')
     {
-        $idsFiles = Gallery::where('message_id', $message->id)->select('id')->get()->pluck('id')->toArray();
-        if (!empty($idsFiles)) {
-            $this->deletesFiles($idsFiles, true);
+        if ($method == 'real') {
+            $idsFiles = Gallery::where('message_id', $message->id)->select('id')->get()->pluck('id')->toArray();
+            if (!empty($idsFiles)) {
+                $this->deletesFiles($idsFiles, true);
+            }
         }
-        return $message->delete();
+        return $message->deleteMessage($method);
     }
 
-    public function destroy($ids)
+    public function destroy($data, $method = 'real')
     {
-        $ids = Arr::collapse($ids);
-        $idsFiles = Gallery::whereIn('message_id',$ids)->select('id')->get()->pluck('id')->toArray();
-        if (!empty($idsFiles)) {
-            $this->deletesFiles($idsFiles, true);
+        $groupedIds = $this->getGroupIdsMessagesByUser($data['ids']);
+        $idsPseudoDelete = [];
+        $idsRealDelete = [];
+        if($idsRealDelete = $groupedIds->pull(auth()->user()->id)){
+            $idsRealDelete = $idsRealDelete->pluck('id')->toArray();
         }
-        $result = Message::destroy($ids);
+        if(!$groupedIds->isEmpty()){
+            $idsPseudoDelete = $groupedIds->collapse()->pluck('id')->toArray();
+        }
+        if ($method == 'real' && !empty($idsRealDelete)) {
+            $idsFiles = Gallery::whereIn('message_id', $idsRealDelete)->select('id')->get()->pluck('id')->toArray();
+            if (!empty($idsFiles)) {
+                $this->deletesFiles($idsFiles, true);
+            }
+        }
+        $result = Message::destroyMessages($idsRealDelete, $idsPseudoDelete, $data['chat_id'], $method);
         return $result;
+    }
+
+    public function getGroupIdsMessagesByUser($ids)
+    {
+        return Message::whereIn('id',$ids)->select('id','sender_id')->get()->groupBy('sender_id');
     }
 
     public function deletesFiles(array $idsFiles, $deleteDir = false)
     {
-        $gallary = Gallery::whereIn('id', $idsFiles)->select('message_id','media_path','preview_path')->get();
+        $gallary = Gallery::whereIn('id', $idsFiles)->select('message_id', 'media_path', 'preview_path')->get();
         $files = [];
-        foreach($gallary as $file){
+        foreach ($gallary as $file) {
             $files[$file->message_id][] = $file;
         }
         //$files = collect($files);
-        foreach($files as $key => $file){
+        foreach ($files as $key => $file) {
             $file = collect($file);
             $media = $file->pluck('media_path');
             $preview = $file->pluck('preview_path');
@@ -178,17 +195,36 @@ class ChatService
 
     public function getMessages($chat, $page = 1)
     {
-        PaginationPaginator::currentPageResolver(function () use ($page) {
-            return $page;
-        });
+        // PaginationPaginator::currentPageResolver(function () use ($page) {
+        //     return $page;
+        // });
+        //$previousResolver = CursorPaginator::currentCursorResolver();
+        if (is_string($page)) {
+            CursorPaginator::currentCursorResolver(function () use ($page) {
+                return $page;
+            });
+        }
         $authId = auth()->user()->id;
-        $messages = $chat->messages()->latest()->paginate(25); //;
+        $messages = $chat->messages()->orderBy('id', 'desc')->with('gallery')->cursorPaginate(100, ['*'], 'page', $page);
         $pagination = [
+            //'count' => $messages->count(),
+            //'cursor' => $messages->cursor(),
+            //'getOptions' => $messages->getOptions(),
+            //'hasPages' => $messages->hasPages(),
+            //'hasMorePages' => $messages->hasMorePages(),
+            //'getCursorName' => $messages->getCursorName(),
+            //'items' => $messages->items(),
+            //'nextCursor' => $messages->nextCursor(),
+            'nextPage' => $this->getPageFromUrl($messages->nextPageUrl()),
+            //'onFirstPage' => $messages->onFirstPage(),
+            'onLastPage' => $messages->onLastPage(),
             'perPage' => $messages->perPage(),
-            'currentPage' => $messages->currentPage(),
-            'total' => $messages->total(),
-            'lastPage' => $messages->lastPage(),
+            //'previousCursor' => $messages->previousCursor(),
+            //'previousPageUrl' => $messages->previousPageUrl(),
+            //'setCursorName' => $messages->setCursorName('newCursor'),
+            //'url' => $messages->url($messages->cursor()),
         ];
+
         $messages = MessageResource::collection($messages)->resolve();
         //asort($messages);
         //$messages = array_values($messages);
@@ -209,6 +245,15 @@ class ChatService
 
         $friends = PreviewFriendResource::collection($friends)->resolve();
         return $friends;
+    }
+
+    public function getPageFromUrl($url)
+    {
+        if (isset($url)) {
+            $request = Request::create($url);
+            $url = $request->query('page');
+        }
+        return $url;
     }
 
     public function getGroup()

@@ -18,9 +18,6 @@ return new class extends Migration
             $table->enum('status', ['pending', 'accepted', 'blocked'])->default('pending');
             $table->timestamps();
 
-            $table->unique('user_id');
-            $table->unique('friend_id');
-
             $table->index('user_id');
             $table->index('friend_id');
             $table->index('status');

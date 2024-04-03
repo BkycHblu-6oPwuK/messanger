@@ -43,7 +43,7 @@ class UserService
     {
         $friend = Friend::where(function ($query) use($id,$status){
             $query->where('user_id',$id)->where('friend_id',auth()->user()->id)->where('status',$status);
-        })->orWhere(function($query) use($id,$status){
+        })->orWhere(function($query) use ($id,$status) {
             $query->where('friend_id',$id)->where('user_id',auth()->user()->id)->where('status',$status);
         })->exists();
         return $friend;

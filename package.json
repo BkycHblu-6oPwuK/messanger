@@ -26,9 +26,11 @@
     "dependencies": {
         "@vueuse/core": "^10.5.0",
         "dropzone-vue": "^0.1.11",
+        "emoji-mart-vue-fast": "^15.0.1",
         "lodash": "^4.17.21",
         "primeicons": "^6.0.1",
         "primevue": "^3.35.0",
+        "vue-emoji-mart": "^1.0.5",
         "vue-plyr": "^7.0.0",
         "vue3-touch-events": "^4.1.8",
         "vuex": "^4.0.2"

@@ -10,7 +10,7 @@ import store from './store';
 import Vue3TouchEvents from "vue3-touch-events";
 import PrimeVue from 'primevue/config';
 import VuePlyr from 'vue-plyr'
-import 'vue-plyr/dist/vue-plyr.css'
+import 'vue-plyr/dist/vue-plyr.css';
 
 import 'primeicons/primeicons.css';
 

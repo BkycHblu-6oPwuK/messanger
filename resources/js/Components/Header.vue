@@ -28,6 +28,15 @@ const toggleMenu = () => menuOpen.value = !menuOpen.value;
                     </Link>
                 </div>
 
+                <div v-else class="flex justify-center items-center space-x-8">
+                    <Link :href="route('login')"
+                        class="text-gray-700 hover:text-primary-700 dark:text-gray-400 lg:dark:hover:text-white">Login
+                    </Link>
+                    <Link :href="route('register')"
+                        class="text-gray-700 hover:text-primary-700 dark:text-gray-400 lg:dark:hover:text-white">Register
+                    </Link>
+                </div>
+
                 <div v-if="false" class="flex items-center space-x-4">
                     <div class="flex items-end lg:hidden mb-4 lg:mb-0">
                         <span v-if="!props?.auth?.user">

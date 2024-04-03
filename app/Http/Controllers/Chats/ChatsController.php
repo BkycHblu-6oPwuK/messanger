@@ -41,7 +41,7 @@ class ChatsController extends BaseChatController
     public function details(ChatGroups $chat)
     {
         if (Str::startsWith(request()->path(), 'api')) {
-            dd('ты лох');
+
         }
         $chat = GroupResource::make($chat)->resolve();
         $chat = array_reduce($chat, function($carry,$item){
@@ -66,16 +66,16 @@ class ChatsController extends BaseChatController
         return response()->json($result);
     }
 
-    public function delete(Message $message)
+    public function delete(Message $message, $method)
     {
-        $result = $this->service->delete($message);
+        $result = $this->service->delete($message, $method);
         return response($result);
     }
 
-    public function destroy(DestroyRequest $request)
+    public function destroy(DestroyRequest $request, $method)
     {
-        $ids = $request->validated();
-        $result = $this->service->destroy($ids);
+        $data = $request->validated();
+        $result = $this->service->destroy($data, $method);
         return response($result);
     }
 
@@ -83,7 +83,7 @@ class ChatsController extends BaseChatController
     public function getMessages(ChatGroups $chat,$page)
     {
         $data = $this->service->getMessages($chat,$page);
-        $messages = $data['messages'];
-        return response()->json($messages);
+        //$messages = $data['messages'];
+        return response()->json($data);
     }
 }

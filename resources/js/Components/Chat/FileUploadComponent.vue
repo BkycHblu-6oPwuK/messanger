@@ -50,7 +50,7 @@ function show() {
     modalShow.value = true
 }
 function close() {
-    files.value = []
+    //files.value = []
     modalShow.value = false
 }
 </script>

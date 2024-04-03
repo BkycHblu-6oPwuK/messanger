@@ -13,7 +13,7 @@ class ChatGroups extends Model
 
     public function members()
     {
-        return $this->hasMany(GroupMembers::class,'chat_group_id','id');
+        return $this->hasMany(GroupMembers::class, 'chat_group_id', 'id');
     }
 
     public function users()
@@ -23,6 +23,13 @@ class ChatGroups extends Model
 
     public function messages()
     {
-        return $this->hasMany(Message::class,'chat_group_id','id');
+        return $this->hasMany(Message::class, 'chat_group_id', 'id')
+            ->whereNotIn('id', function ($query) {
+                $query->select('message_id')
+                    ->from('deleted_messages')
+                    ->where('deleted_messages.user_id', auth()->user()->id)
+                    ->whereRaw('deleted_messages.message_id = message_id')
+                    ->where('deleted_messages.chat_group_id', $this->id);
+            });
     }
 }

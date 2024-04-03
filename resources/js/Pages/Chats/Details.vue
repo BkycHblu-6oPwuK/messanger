@@ -37,6 +37,9 @@ watch(() => isLargeScreen.value, (newValue) => {
 onMounted(() => {
     redirectToMessages()
 });
+const back = () => {
+    router.visit(route('chats.show',props.chat.id), { method: 'get' })
+}
 </script>
 
 <template>
@@ -44,7 +47,8 @@ onMounted(() => {
     <Modal v-if="isLargeScreen" :show="modalShow" @close="close">
         <Details :chat="props.chat"></Details>
     </Modal>
-    <div v-if="!isLargeScreen" class="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
+    <div v-if="!isLargeScreen" class="min-h-screen bg-gray-100 flex flex-col sm:py-12">
+        <div @click="back"> ← </div>
         <div class="py-3 sm:max-w-xl mx-auto">
             <Details :chat="props.chat"></Details>
         </div>

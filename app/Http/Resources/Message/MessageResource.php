@@ -20,7 +20,7 @@ class MessageResource extends JsonResource
             'sender_id' => $this->sender_id,
             'chat_group_id' => $this->chat_group_id,
             'date' => $this->parseToTimeInMessage(),
-            'gallary' => $this->getGallaryForMessage()->toArray(),
+            'gallary' => $this->gallery->toArray(),
         ];
     }
 }

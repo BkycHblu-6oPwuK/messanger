@@ -23,8 +23,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::get('/getMessage/{chat}/{page}',[ChatsController::class, 'getMessages'])->middleware('auth')->name('message.get');
 
-Route::post('/friend',[FriendsController::class, 'store'])->middleware('auth')->name('friend.store');
-Route::post('/friend/{friend}',[FriendsController::class, 'accepted'])->middleware('auth')->name('friend.accepted');
+Route::post('/friend',[FriendsController::class, 'store'])->name('friend.store');
+Route::post('/friend/{friend}',[FriendsController::class, 'accepted'])->name('friend.accepted');
 Route::get('/chat/{chat}/details',[ChatsController::class, 'details'])->name('chats.details.api');
-Route::post('/chat/destroyMessages',[ChatsController::class, 'destroy'])->name('chats.destroy');
+Route::post('/chat/destroyMessages/{method}',[ChatsController::class, 'destroy'])->name('chats.destroy');
 Route::post('/getUsersForIds',[UsersController::class, 'getUsersForIds'])->name('chats.getUsersForIds');
